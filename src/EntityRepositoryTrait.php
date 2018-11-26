@@ -65,4 +65,14 @@ trait EntityRepositoryTrait
     {
         $this->_em->flush();
     }
+
+    /**
+     * Add default value to argument $criteria
+     *
+     * @inheritdoc
+     */
+    public function count(array $criteria = [])
+    {
+        return parent::count($criteria);
+    }
 }
