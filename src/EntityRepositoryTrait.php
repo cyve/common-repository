@@ -12,7 +12,7 @@ trait EntityRepositoryTrait
      *
      * @return void
      */
-    public function save($entity, bool $flush = true): void
+    public function save($entity, bool $flush = true)
     {
         if (!$this->_em->contains($entity)) {
             $this->_em->persist($entity);
@@ -31,7 +31,7 @@ trait EntityRepositoryTrait
      *
      * @return void
      */
-    public function remove($entity, bool $flush = true): void
+    public function remove($entity, bool $flush = true)
     {
         if ($this->_em->contains($entity)) {
             $this->_em->remove($entity);
@@ -61,7 +61,7 @@ trait EntityRepositoryTrait
      *
      * @return void
      */
-    public function flush(): void
+    public function flush()
     {
         $this->_em->flush();
     }
@@ -71,7 +71,7 @@ trait EntityRepositoryTrait
      *
      * @inheritdoc
      */
-    public function count(array $criteria = [])
+    public function count(array $criteria = []): int
     {
         return parent::count($criteria);
     }
@@ -83,7 +83,7 @@ trait EntityRepositoryTrait
      * @param integer|null $offset
      * @return array
      */
-    public function searchBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+    public function searchBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
     {
         $builder = $this->createQueryBuilder('e');
 

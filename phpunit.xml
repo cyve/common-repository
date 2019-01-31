@@ -2,7 +2,7 @@
 
 <phpunit colors="true" bootstrap="vendor/autoload.php">
     <testsuites>
-        <testsuite name="Cyve CommonRepository test suite">
+        <testsuite name="Cyve EntityRepository test suite">
             <directory>tests</directory>
         </testsuite>
     </testsuites>
