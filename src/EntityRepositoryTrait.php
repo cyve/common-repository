@@ -133,4 +133,16 @@ trait EntityRepositoryTrait
 
         return $builder->getQuery()->getResult();
     }
+
+    /**
+     * @param integer|null $offset
+     * @return array
+     */
+    public function iterate($parameters = null, $hydrationMode = 1): \Iterator
+    {
+        return $this->createQueryBuilder('e')
+            ->getQuery()
+            ->iterate($parameters, $hydrationMode)
+        ;
+    }
 }

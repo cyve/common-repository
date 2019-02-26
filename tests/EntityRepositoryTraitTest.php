@@ -16,5 +16,6 @@ class EntityRepositoryTraitTest extends TestCase
         $this->assertTrue(method_exists($repository, 'flush'));
         $this->assertTrue(method_exists($repository, 'count'));
         $this->assertTrue(method_exists($repository, 'searchBy'));
+        $this->assertTrue(method_exists($repository, 'iterate'));
     }
 }
