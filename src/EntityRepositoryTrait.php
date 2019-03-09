@@ -135,14 +135,14 @@ trait EntityRepositoryTrait
     }
 
     /**
-     * @param integer|null $offset
+     * @param integer $hydrationMode
      * @return array
      */
-    public function iterate($parameters = null, $hydrationMode = 1): \Iterator
+    public function iterate($hydrationMode = 1): \Iterator
     {
-        return $this->createQueryBuilder('e')
-            ->getQuery()
-            ->iterate($parameters, $hydrationMode)
-        ;
+        foreach ($this->createQueryBuilder('e')->getQuery()->iterate(null, $hydrationMode) as $value) {
+            yield $value[0];
+        }
+    }
     }
 }
