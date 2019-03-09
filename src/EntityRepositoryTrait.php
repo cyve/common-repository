@@ -144,5 +144,33 @@ trait EntityRepositoryTrait
             yield $value[0];
         }
     }
+
+    /**
+     * @param array $criteria
+     * @param array|null $orderBy
+     * @param null $limit
+     * @param null $offset
+     * @param int $hydrationMode
+     * @return \Iterator
+     */
+    public function iterateBy(array $criteria, array $orderBy = null, $limit = null, $offset = null, $hydrationMode = 1): \Iterator
+    {
+        $builder = $this->createQueryBuilder('e');
+
+        foreach ($criteria as $property => $value) {
+            $builder->andWhere(sprintf('e.%s = :%s', $property, $property))->setParameter($property, $value);
+        }
+
+        if ($orderBy) {
+            foreach($orderBy as $property => $value){
+                $builder->addOrderBy(sprintf('e.%s', $property), $value);
+            }
+        }
+        $builder->setMaxResults($limit);
+        $builder->setFirstResult($offset);
+
+        foreach ($builder->getQuery()->iterate(null, $hydrationMode) as $value) {
+            yield $value[0];
+        }
     }
 }

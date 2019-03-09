@@ -15,4 +15,5 @@ interface EntityRepositoryInterface
     public function count(array $criteria = []);
     public function searchBy(array $criteria, array $orderBy = null, $limit = null, $offset = null);
     public function iterate($hydrationMode = 1);
+    public function iterateBy(array $criteria, array $orderBy = null, $limit = null, $offset = null, $hydrationMode = 1);
 }
