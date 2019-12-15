@@ -19,7 +19,7 @@ trait EntityRepositoryTrait
         }
 
         if ($flush) {
-            $this->_em->flush($entity);
+            $this->_em->flush();
         }
     }
 
@@ -38,7 +38,7 @@ trait EntityRepositoryTrait
         }
 
         if ($flush) {
-            $this->_em->flush($entity);
+            $this->_em->flush();
         }
     }
 
