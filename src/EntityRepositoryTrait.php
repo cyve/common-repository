@@ -5,71 +5,66 @@ namespace Cyve\EntityRepository;
 trait EntityRepositoryTrait
 {
     /**
-     * Persist an entity and flush EntityManager
+     * Persist and flush an object.
      *
-     * @param object $entity Doctrine entity to save
-     * @param boolean $flush Flush if true
-     *
-     * @return void
+     * @param object $entity
+     * @param bool $flush
      */
-    public function save($entity, bool $flush = true)
+    public function save($entity, bool $flush = true): void
     {
-        if (!$this->_em->contains($entity)) {
-            $this->_em->persist($entity);
+        $em = $this->getEntityManager();
+
+        if (!$em->contains($entity)) {
+            $em->persist($entity);
         }
 
         if ($flush) {
-            $this->_em->flush();
+            $em->flush();
         }
     }
 
     /**
-     * Remove an entity and flush EntityManager
+     * Remove and flush an object.
      *
-     * @param object $entity Doctrine entity to remove
-     * @param boolean $flush Flush if true
-     *
-     * @return void
+     * @param object $entity
+     * @param bool $flush
      */
-    public function remove($entity, bool $flush = true)
+    public function remove($entity, bool $flush = true): void
     {
-        if ($this->_em->contains($entity)) {
-            $this->_em->remove($entity);
+        $em = $this->getEntityManager();
+
+        if ($em->contains($entity)) {
+            $em->remove($entity);
         }
 
         if ($flush) {
-            $this->_em->flush();
+            $em->flush();
         }
     }
 
     /**
-     * Refresh an entity
+     * Refresh an object.
      *
-     * @param object $entity Doctrine entity to refresh
-     *
-     * @return object
+     * @param object $entity
      */
-    public function refresh($entity)
+    public function refresh($entity): void
     {
-        $this->_em->refresh($entity);
-
-        return $entity;
+        $this->getEntityManager()->refresh($entity);
     }
 
     /**
-     * Flush EntityManager
-     *
-     * @return void
+     * Flush all objects.
      */
-    public function flush()
+    public function flush(): void
     {
-        $this->_em->flush();
+        $this->getEntityManager()->flush();
     }
 
     /**
-     * Add default value to argument $criteria
+     * Add default value to argument $criteria.
      *
-     * @inheritdoc
+     * @param array $criteria
+     * @return int
      */
     public function count(array $criteria = []): int
     {
@@ -77,95 +72,46 @@ trait EntityRepositoryTrait
     }
 
     /**
-     * @param array $criteria Search criteria (['foo' => 'bar'] or ['foo' => ['value' => 'bar', 'strategy' => 'start']]). Available strategies: contain, start, end , equal, greater, greater_equal, less, less_equal.
-     * @param array|null $orderBy
-     * @param integer|null $limit
-     * @param integer|null $offset
-     * @return array
-     */
-    public function searchBy(array $criteria, array $orderBy = null, $limit = null, $offset = null): array
-    {
-        $builder = $this->createQueryBuilder('e');
-
-        foreach ($criteria as $property => $value) {
-            if (is_array($value) && isset($value['value'])) {
-                $query = $value['value'];
-                $strategy = $value['strategy'] ?? 'contain';
-            } else {
-                $query = $value;
-                $strategy = 'contain';
-            }
-
-            switch ($strategy) {
-                case 'equal':
-                    $builder->andWhere('e.'.$property.' = :'.$property)->setParameter($property, $query);
-                    break;
-                case 'greater':
-                    $builder->andWhere('e.'.$property.' > :'.$property)->setParameter($property, $query);
-                    break;
-                case 'greater_equal':
-                    $builder->andWhere('e.'.$property.' >= :'.$property)->setParameter($property, $query);
-                    break;
-                case 'less':
-                    $builder->andWhere('e.'.$property.' < :'.$property)->setParameter($property, $query);
-                    break;
-                case 'less_equal':
-                    $builder->andWhere('e.'.$property.' <= :'.$property)->setParameter($property, $query);
-                    break;
-                case 'start':
-                    $builder->andWhere('e.'.$property.' LIKE :'.$property)->setParameter($property, $query.'%');
-                    break;
-                case 'end':
-                    $builder->andWhere('e.'.$property.' LIKE :'.$property)->setParameter($property, '%'.$query);
-                    break;
-                default:
-                    $builder->andWhere('e.'.$property.' LIKE :'.$property)->setParameter($property, '%'.$query.'%');
-            }
-        }
-
-        if ($orderBy) {
-            foreach($orderBy as $property => $value){
-                $builder->addOrderBy('e.'.$property, $value);
-            }
-        }
-        $builder->setMaxResults($limit);
-        $builder->setFirstResult($offset);
-
-        return $builder->getQuery()->getResult();
-    }
-
-    /**
-     * @param integer $hydrationMode
-     * @return array
-     */
-    public function iterate($hydrationMode = 1): \Iterator
-    {
-        foreach ($this->createQueryBuilder('e')->getQuery()->iterate(null, $hydrationMode) as $value) {
-            yield $value[0];
-        }
-    }
-
-    /**
-     * @param array $criteria
-     * @param array|null $orderBy
-     * @param null $limit
-     * @param null $offset
+     * Iterate on all objects in the repository.
+     *
      * @param int $hydrationMode
+     *
      * @return \Iterator
      */
-    public function iterateBy(array $criteria, array $orderBy = null, $limit = null, $offset = null, $hydrationMode = 1): \Iterator
+    public function iterate(int $hydrationMode = 1): \Iterator
+    {
+        return $this->iterateBy([], null, null, null, $hydrationMode);
+    }
+
+    /**
+     * Iterate on objects by a set of criteria.
+     *
+     * @param array $criteria
+     * @param array|null $orderBy
+     * @param int|null $limit
+     * @param int|null $offset
+     * @param int $hydrationMode
+     *
+     * @return \Iterator
+     */
+    public function iterateBy(array $criteria, array $orderBy = null, int $limit = null, $offset = null, $hydrationMode = 1): \Iterator
     {
         $builder = $this->createQueryBuilder('e');
 
         foreach ($criteria as $property => $value) {
-            $builder->andWhere(sprintf('e.%s = :%s', $property, $property))->setParameter($property, $value);
+            if ($this->_class->hasField($property)) {
+                $builder->andWhere(sprintf('e.%s = :%s', $property, $property))->setParameter($property, $value);
+            }
         }
 
         if ($orderBy) {
             foreach($orderBy as $property => $value){
-                $builder->addOrderBy(sprintf('e.%s', $property), $value);
+                if ($this->_class->hasField($property)) {
+                    $builder->addOrderBy(sprintf('e.%s', $property), $value);
+                }
             }
         }
+
         $builder->setMaxResults($limit);
         $builder->setFirstResult($offset);
 

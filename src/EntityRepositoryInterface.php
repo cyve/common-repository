@@ -2,18 +2,15 @@
 
 namespace Cyve\EntityRepository;
 
-interface EntityRepositoryInterface
+use Doctrine\Common\Persistence\ObjectRepository;
+
+interface EntityRepositoryInterface extends ObjectRepository
 {
-    public function find($id);
-    public function findAll();
-    public function findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null);
-    public function findOneBy(array $criteria);
-    public function getClassName();
-    public function save($entity, bool $flush = true);
-    public function remove($entity, bool $flush = true);
-    public function flush();
-    public function count(array $criteria = []);
-    public function searchBy(array $criteria, array $orderBy = null, $limit = null, $offset = null);
-    public function iterate($hydrationMode = 1);
-    public function iterateBy(array $criteria, array $orderBy = null, $limit = null, $offset = null, $hydrationMode = 1);
+    public function save($entity, bool $flush = true): void;
+    public function remove($entity, bool $flush = true): void;
+    public function refresh($entity): void;
+    public function flush(): void;
+    public function count(array $criteria = []): int;
+    public function iterate(int $hydrationMode = 1): \Iterator;
+    public function iterateBy(array $criteria, array $orderBy = null, int $limit = null, int $offset = null, int $hydrationMode = 1): \Iterator;
 }
