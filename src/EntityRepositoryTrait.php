@@ -2,15 +2,14 @@
 
 namespace Cyve\EntityRepository;
 
+use Doctrine\ORM\QueryBuilder;
+
 trait EntityRepositoryTrait
 {
     /**
      * Persist and flush an object.
-     *
-     * @param object $entity
-     * @param bool $flush
      */
-    public function save($entity, bool $flush = true): void
+    public function save($entity): void
     {
         $em = $this->getEntityManager();
 
@@ -18,34 +17,40 @@ trait EntityRepositoryTrait
             $em->persist($entity);
         }
 
-        if ($flush) {
-            $em->flush();
-        }
+        $em->flush();
     }
 
     /**
      * Remove and flush an object.
-     *
-     * @param object $entity
-     * @param bool $flush
      */
-    public function remove($entity, bool $flush = true): void
+    public function delete($entity): void
     {
         $em = $this->getEntityManager();
 
         if ($em->contains($entity)) {
             $em->remove($entity);
-        }
-
-        if ($flush) {
             $em->flush();
         }
     }
 
     /**
+     * Persist an object.
+     */
+    public function persist($entity): void
+    {
+        $this->getEntityManager()->persist($entity);
+    }
+
+    /**
+     * Remove an object.
+     */
+    public function remove($entity): void
+    {
+        $this->getEntityManager()->remove($entity);
+    }
+
+    /**
      * Refresh an object.
-     *
-     * @param object $entity
      */
     public function refresh($entity): void
     {
@@ -61,22 +66,7 @@ trait EntityRepositoryTrait
     }
 
     /**
-     * Add default value to argument $criteria.
-     *
-     * @param array $criteria
-     * @return int
-     */
-    public function count(array $criteria = []): int
-    {
-        return parent::count($criteria);
-    }
-
-    /**
      * Iterate on all objects in the repository.
-     *
-     * @param int $hydrationMode
-     *
-     * @return \Iterator
      */
     public function iterate(int $hydrationMode = 1): \Iterator
     {
@@ -85,38 +75,76 @@ trait EntityRepositoryTrait
 
     /**
      * Iterate on objects by a set of criteria.
-     *
-     * @param array $criteria
-     * @param array|null $orderBy
-     * @param int|null $limit
-     * @param int|null $offset
-     * @param int $hydrationMode
-     *
-     * @return \Iterator
      */
-    public function iterateBy(array $criteria, array $orderBy = null, int $limit = null, $offset = null, $hydrationMode = 1): \Iterator
+    public function iterateBy(array $criteria, array $orderBy = [], int $limit = null, $offset = null, $hydrationMode = 1)//: \Iterator
     {
         $builder = $this->createQueryBuilder('e');
 
-        foreach ($criteria as $property => $value) {
-            if ($this->_class->hasField($property)) {
-                $builder->andWhere(sprintf('e.%s = :%s', $property, $property))->setParameter($property, $value);
-            }
-        }
-
-        if ($orderBy) {
-            foreach($orderBy as $property => $value){
-                if ($this->_class->hasField($property)) {
-                    $builder->addOrderBy(sprintf('e.%s', $property), $value);
-                }
-            }
-        }
+        $this->applyCriteria($builder, $criteria);
+        $this->applyOrderBy($builder, $orderBy);
 
         $builder->setMaxResults($limit);
         $builder->setFirstResult($offset);
 
         foreach ($builder->getQuery()->iterate(null, $hydrationMode) as $value) {
             yield $value[0];
+        }
+    }
+
+    /**
+     * Same as findBy() but allows "%" in criteria.
+     */
+    public function searchBy(array $criteria, array $orderBy = [], int $limit = null, $offset = null): array
+    {
+        $builder = $this->createQueryBuilder('e');
+
+        $this->applyCriteria($builder, $criteria);
+        $this->applyOrderBy($builder, $orderBy);
+
+        $builder->setMaxResults($limit);
+        $builder->setFirstResult($offset);
+
+        return $builder->getQuery()->getResult();
+    }
+
+    /**
+     * Same as count() but allows "%" in criteria.
+     */
+    public function countSearchBy(array $criteria): int
+    {
+        $builder = $this->createQueryBuilder('e');
+        $builder->select('COUNT(e) AS count');
+
+        $this->applyCriteria($builder, $criteria);
+
+        return $builder->getQuery()->getSingleScalarResult();
+    }
+
+    private function applyCriteria(QueryBuilder $builder, array $criteria = []): void
+    {
+        $classMetadata = $this->getClassMetadata();
+
+        foreach ($criteria as $property => $value) {
+            if ($classMetadata->hasField($property)) {
+                if ($value !== '' && (substr($value, 0, 1) === '%' || substr($value, -1) === '%')) {
+                    $builder->andWhere(sprintf('e.%s LIKE :%s', $property, $property));
+                } else {
+                    $builder->andWhere(sprintf('e.%s = :%s', $property, $property));
+                }
+
+                $builder->setParameter($property, $value);
+            }
+        }
+    }
+
+    private function applyOrderBy(QueryBuilder $builder, array $orderBy = []): void
+    {
+        $classMetadata = $this->getClassMetadata();
+
+        foreach($orderBy as $property => $value){
+            if ($classMetadata->hasField($property) && in_array(strtolower($value), ['asc', 'desc'])) {
+                $builder->addOrderBy(sprintf('e.%s', $property), $value);
+            }
         }
     }
 }

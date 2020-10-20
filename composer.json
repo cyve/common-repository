@@ -5,15 +5,12 @@
     "authors": [
         {
             "name": "Cyril Vermande",
-            "homepage": "http://www.cyrilwebdesign.com"
+            "homepage": "https://www.cyrilwebdesign.com"
         }
     ],
     "require": {
         "php": "^7.1",
-        "doctrine/orm": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "*"
+        "doctrine/orm": "^2.0"
     },
     "autoload": {
         "psr-4": {
