@@ -76,7 +76,7 @@ trait EntityRepositoryTrait
     /**
      * Iterate on objects by a set of criteria.
      */
-    public function iterateBy(array $criteria, array $orderBy = [], int $limit = null, $offset = null, $hydrationMode = 1)//: \Iterator
+    public function iterateBy(array $criteria, array $orderBy = [], int $limit = null, $offset = null, $hydrationMode = 1): \Iterator
     {
         $builder = $this->createQueryBuilder('e');
 
